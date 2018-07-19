@@ -1,5 +1,6 @@
 # Bytom Miner代码阅读
-  先了解一下Bytom的mine流程，这个是一个理解Bytom挖矿流程的很好参考例子。这个因为是cpu跑的，速度不是很好，里面应该只是为了调试使用，这些系列说写一个miner就是使用更高效的GPU方式实现。相对SOLO挖矿，GPU方式实现的是对接矿池挖矿，最大保证了矿工收益。SOLO和矿池挖矿的差别可自行网上了解。
+  先了解一下Bytom的mine流程，这个是一个理解Bytom挖矿流程的很好参考例子。这个因为是cpu跑的，速度不是很好，里面应该只是为了调试使用，这些系列说写一个
+  miner就是使用更高效的GPU方式实现。相对SOLO挖矿，GPU方式实现的是对接矿池挖矿，最大保证了矿工收益。SOLO和矿池挖矿的差别可自行网上了解。
   Bytom的miner代码在 [cmd/miner/main.go](https://github.com/Bytom/bytom/blob/master/cmd/miner/main.go),我们看下main函数，代码不多，如下：
   ```golang
   func main() {
@@ -22,7 +23,8 @@
 			lastNonce = ^uint64(0)
 		}
 		if doWork(resp.BlockHeader, resp.Seed) {  //使用work获取到的2参数调用doWork计算挖矿，如果找到返回了ture
-			util.ClientCall("/submit-work", &api.SubmitWorkReq{BlockHeader: resp.BlockHeader})//提交计算结果获得奖励
+			//提交计算结果获得奖励
+			util.ClientCall("/submit-work", &api.SubmitWorkReq{BlockHeader: resp.BlockHeader})
 			getBlockHeaderByHeight(resp.BlockHeader.Height)
 		}
 
@@ -42,7 +44,8 @@ func doWork(bh *types.BlockHeader, seed *bc.Hash) bool {
 		bh.Nonce = i //每一次计算需要需要改变Nonce的值，如果对接矿池这个起步Nonce有矿池提供
 		// log.Printf("nonce = %v\n", i)
 		headerHash := bh.Hash()//计算出bh的Hash值
-		if difficulty.CheckProofOfWork(&headerHash, seed, bh.Bits) {//使用Hash和seed Bits 三个参数调用计算，里面会调用到一次Tensority算法，Tensority算法是矩阵计算，比较复杂，后面专门讲。
+		if difficulty.CheckProofOfWork(&headerHash, seed, bh.Bits) {//使用Hash和seed Bits 三个参数调用计算，里面会调用到一次
+		//Tensority算法，Tensority算法是矩阵计算，比较复杂，后面专门讲。
 			log.Printf("Mining succeed! Proof hash: %v\n", headerHash.String())
 			return true
 		}
@@ -57,8 +60,10 @@ difficulty.CheckProofOfWork在 [consensus/difficulty/difficulty.go](https://gith
 ```golang
 // CheckProofOfWork checks whether the hash is valid for a given difficulty.
 func CheckProofOfWork(hash, seed *bc.Hash, bits uint64) bool {
-	compareHash := tensority.AIHash.Hash(hash, seed)//调用tensority算法计算一次，获取到Hash
-	return HashToBig(compareHash).Cmp(CompactToBig(bits)) <= 0 //Hash和目标比较需要小于才算找到结果，不对就继续计算其他Nonce
+	//调用tensority算法计算一次，获取到Hash
+	compareHash := tensority.AIHash.Hash(hash, seed)
+	//Hash和目标比较需要小于才算找到结果，不对就继续计算其他Nonce
+	return HashToBig(compareHash).Cmp(CompactToBig(bits)) <= 0 
 }
 ```
 
