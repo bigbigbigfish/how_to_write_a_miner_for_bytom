@@ -39,10 +39,10 @@ main函数很简单，就3部，获取work,计算，找到结果提交。重点�
 func doWork(bh *types.BlockHeader, seed *bc.Hash) bool {
 	log.Println("Start from nonce:", lastNonce+1)
 	for i := uint64(lastNonce + 1); i <= uint64(lastNonce+consensus.TargetSecondsPerBlock*esHR) && i <= maxNonce; i++ {
-		bh.Nonce = i
+		bh.Nonce = i //每一次计算需要需要改变Nonce的值，如果对接矿池这个起步Nonce有矿池提供
 		// log.Printf("nonce = %v\n", i)
-		headerHash := bh.Hash()
-		if difficulty.CheckProofOfWork(&headerHash, seed, bh.Bits) {
+		headerHash := bh.Hash()//计算出bh的Hash值
+		if difficulty.CheckProofOfWork(&headerHash, seed, bh.Bits) {//使用Hash和seed Bits 三个参数调用计算，里面会调用到一次Tensority算法，Tensority算法是矩阵计算，比较复杂，后面专门讲。
 			log.Printf("Mining succeed! Proof hash: %v\n", headerHash.String())
 			return true
 		}
@@ -52,3 +52,13 @@ func doWork(bh *types.BlockHeader, seed *bc.Hash) bool {
 	return false
 }
 ```
+difficulty.CheckProofOfWork在 [consensus/difficulty/difficulty.go](https://github.com/Bytom/bytom/blob/8ae1695ca9807ef802a6ecbec63893c78c85188e/consensus/difficulty/difficulty.go)
+其中
+```golang
+// CheckProofOfWork checks whether the hash is valid for a given difficulty.
+func CheckProofOfWork(hash, seed *bc.Hash, bits uint64) bool {
+	compareHash := tensority.AIHash.Hash(hash, seed)//调用tensority算法计算一次，获取到Hash
+	return HashToBig(compareHash).Cmp(CompactToBig(bits)) <= 0 //Hash和目标比较需要小于才算找到结果，不对就继续计算其他Nonce
+}
+```
+
