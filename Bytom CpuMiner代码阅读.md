@@ -62,3 +62,12 @@ func CheckProofOfWork(hash, seed *bc.Hash, bits uint64) bool {
 }
 ```
 
+很简单的一个miner，流程就大概如此。但这个只是实验室的调试使用，目前实际上想用它去挖矿获取btm是不可能的。基于这个流程的了解，如果开发一个GPU miner
+需要怎么做？
+大概需要做到实现：
+- 对接矿池，使用矿池的通信协议，获取work,就是这里的getWrok。
+- GPU实现tensority算法，计算结果，对应dowok中的tensority.AIHash.Hash(hash, seed)。
+- 提交找到符合条件的Nonce。
+
+本篇完。
+
